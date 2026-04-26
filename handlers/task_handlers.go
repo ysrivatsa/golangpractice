@@ -41,13 +41,50 @@ func enableCors(w http.ResponseWriter) {
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 }
-
 func GetTasks(w http.ResponseWriter, r *http.Request) {
 	enableCors(w)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(Tasks)
-}
 
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	query := `
+		SELECT id, task_name, priority, status
+		FROM tasks
+		ORDER BY id DESC
+	`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var tasks []models.Task
+
+	for rows.Next() {
+		var task models.Task
+
+		err := rows.Scan(
+			&task.ID,
+			&task.TaskName,
+			&task.PriorityOfTask,
+			&task.Status,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		tasks = append(tasks, task)
+	}
+
+	json.NewEncoder(w).Encode(tasks)
+}
 func CreateTask(w http.ResponseWriter, r *http.Request) {
 	enableCors(w)
 
