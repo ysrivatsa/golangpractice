@@ -64,7 +64,7 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	query := `
 	INSERT INTO tasks (task_name, priority, status) 
-	VALUES (s1,s2,s3)
+	VALUES ($1,$2,$3)
 	RETURNING id
 	
 	`
